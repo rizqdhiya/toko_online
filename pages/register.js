@@ -6,6 +6,7 @@ export default function Register() {
     email: '',
     password: '',
     alamat: '',
+    no_hp: '',
   });
   const [msg, setMsg] = useState('');
 
@@ -22,7 +23,7 @@ export default function Register() {
     setMsg(data.message);
 
     if (res.ok) {
-      setForm({ nama: '', email: '', password: '', alamat: '' });
+      setForm({ nama: '', email: '', password: '', alamat: '', no_hp: '' });
     }
   };
 
@@ -57,6 +58,13 @@ export default function Register() {
           onChange={(e) => setForm({ ...form, alamat: e.target.value })}
           className="w-full border px-3 py-2 rounded"
         ></textarea>
+        <input
+          type="text"
+          placeholder="Nomor HP"
+          value={form.no_hp}
+          onChange={(e) => setForm({ ...form, no_hp: e.target.value })}
+          className="w-full border px-3 py-2 rounded"
+        />
         <button type="submit" className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700">
           Daftar
         </button>

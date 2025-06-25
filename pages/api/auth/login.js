@@ -1,6 +1,7 @@
 import db from "@/lib/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import * as cookie from "cookie";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
@@ -38,6 +39,12 @@ export default async function handler(req, res) {
     });
 
     console.log("Token berhasil dibuat:", token);
+
+    // Setelah login sukses
+    res.setHeader('Set-Cookie', [
+      cookie.serialize('token', 'admin', { httpOnly: true, path: '/', maxAge: 60 * 60 * 24 }),
+      cookie.serialize('userId', String(user.id), { httpOnly: true, path: '/', maxAge: 60 * 60 * 24 }),
+    ]);
 
     res.status(200).json({ message: "Login berhasil", nama: user.nama, token });
   } catch (err) {
