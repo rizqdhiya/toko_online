@@ -46,9 +46,13 @@ CREATE TABLE IF NOT EXISTS `cart_items` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `cart_items_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   CONSTRAINT `cart_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `produk` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table toko_baju.cart_items: ~0 rows (approximately)
+-- Dumping data for table toko_baju.cart_items: ~2 rows (approximately)
+INSERT INTO `cart_items` (`id`, `user_id`, `product_id`, `quantity`, `created_at`, `updated_at`) VALUES
+	(93, 3, 6, 1, '2025-07-18 14:34:04', '2025-07-18 14:34:04'),
+	(95, 3, 1, 1, '2025-07-18 14:34:08', '2025-07-18 14:34:08'),
+	(96, 3, 3, 1, '2025-07-18 14:34:09', '2025-07-18 14:34:09');
 
 -- Dumping structure for table toko_baju.orders
 CREATE TABLE IF NOT EXISTS `orders` (
@@ -62,19 +66,19 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `alamat` text,
   `kota_id` int DEFAULT NULL,
   `ongkir` int DEFAULT NULL,
+  `kota_nama` varchar(100) DEFAULT NULL,
+  `provinsi_nama` varchar(100) DEFAULT NULL,
+  `alasan_batal` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table toko_baju.orders: ~7 rows (approximately)
-INSERT INTO `orders` (`id`, `user_id`, `total`, `created_at`, `status`, `bukti_bayar`, `no_resi`, `alamat`, `kota_id`, `ongkir`) VALUES
-	(26, 3, 2123368646, '2025-06-17 15:36:44', 'menunggu_konfirmasi', '/uploads/fbzpmq06nt85i53p5lxebe411.jpg', NULL, NULL, NULL, NULL),
-	(27, 9, 152503, '2025-06-17 15:38:57', 'batal', '/uploads/fxy3skkrb1dwfaa86il83ji8i.jpg', NULL, NULL, NULL, NULL),
-	(28, 3, 205312, '2025-06-25 10:34:31', 'menunggu_pembayaran', NULL, NULL, NULL, NULL, NULL),
-	(29, 3, 205312, '2025-06-25 10:36:10', 'menunggu_pembayaran', NULL, NULL, NULL, NULL, NULL),
-	(30, 3, 137312, '2025-06-25 10:37:10', 'menunggu_pembayaran', NULL, NULL, NULL, NULL, NULL),
-	(31, 3, 380433, '2025-06-25 10:40:32', 'menunggu_pembayaran', NULL, NULL, NULL, NULL, NULL),
-	(32, 3, 2123375646, '2025-06-25 10:42:52', 'menunggu_pembayaran', NULL, NULL, NULL, NULL, NULL);
+-- Dumping data for table toko_baju.orders: ~9 rows (approximately)
+INSERT INTO `orders` (`id`, `user_id`, `total`, `created_at`, `status`, `bukti_bayar`, `no_resi`, `alamat`, `kota_id`, `ongkir`, `kota_nama`, `provinsi_nama`, `alasan_batal`) VALUES
+	(51, 3, 261624, '2025-07-18 13:33:16', 'diterima', '/uploads/wb4hd9o1dd5rl5q9w2ikqe2os.png', 'weqweq', 'RT06/05, Bebengan, BOJA', 41, 15000, 'Banyumas', 'Jawa Tengah', NULL),
+	(52, 3, 2123257525, '2025-07-18 13:36:51', 'batal', '/uploads/yoqy7a8fzgk721pn9r58k94zw.png', NULL, 'RT06/05, Bebengan, BOJA', 348, 11000, 'Pekalongan', 'Jawa Tengah', 'stok_habis'),
+	(53, 11, 157000, '2025-07-18 16:44:44', 'diterima', '/uploads/jqb4sg9g2firqjstbah7h7bg9.03.48', '34223r32r32', 'RT06/05, Bebengan, BOJA', 181, 7000, 'Kendal', 'Jawa Tengah', NULL),
+	(54, 11, 178312, '2025-07-18 16:45:44', 'batal', '/uploads/m3mhauc1gpam5oju1rw8oxji2.png', NULL, 'RT06/05, Bebengan, BOJA', 105, 55000, 'Cilacap', 'Jawa Tengah', 'stok_habis');
 
 -- Dumping structure for table toko_baju.order_items
 CREATE TABLE IF NOT EXISTS `order_items` (
@@ -87,34 +91,15 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
   KEY `produk_id` (`produk_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=110 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table toko_baju.order_items: ~21 rows (approximately)
+-- Dumping data for table toko_baju.order_items: ~3 rows (approximately)
 INSERT INTO `order_items` (`id`, `order_id`, `produk_id`, `nama`, `harga`, `qty`) VALUES
-	(45, 22, 4, 'erfef e e e e ', 2123123213, 1),
-	(46, 22, 5, 'wewe', 122121, 1),
-	(47, 22, 6, 'asdd', 123312, 1),
-	(48, 23, 4, 'erfef e e e e ', 2123123213, 1),
-	(49, 23, 5, 'wewe', 122121, 1),
-	(50, 24, 4, 'erfef e e e e ', 2123123213, 1),
-	(51, 24, 5, 'wewe', 122121, 1),
-	(52, 25, 4, 'erfef e e e e ', 2123123213, 1),
-	(53, 25, 5, 'wewe', 122121, 1),
-	(54, 26, 5, 'wewe', 122121, 1),
-	(55, 26, 6, 'asdd', 123312, 1),
-	(56, 26, 4, 'erfef e e e e ', 2123123213, 1),
-	(57, 27, 6, 'asdd', 123312, 1),
-	(58, 27, 1, 'baju kekok', 29191, 1),
-	(59, 28, 7, 'Baju Gamis Keren', 75000, 1),
-	(60, 28, 6, 'asdd', 123312, 1),
-	(61, 29, 7, 'Baju Gamis Keren', 75000, 1),
-	(62, 29, 6, 'asdd', 123312, 1),
-	(63, 30, 6, 'asdd', 123312, 1),
-	(64, 31, 6, 'asdd', 123312, 1),
-	(65, 31, 5, 'wewe', 122121, 1),
-	(66, 32, 4, 'erfef e e e e ', 2123123213, 1),
-	(67, 32, 5, 'wewe', 122121, 1),
-	(68, 32, 6, 'asdd', 123312, 1);
+	(105, 51, 6, 'asdd', 123312, 2),
+	(106, 52, 4, 'erfef e e e e ', 2123123213, 1),
+	(107, 52, 6, 'asdd', 123312, 1),
+	(108, 53, 8, 'Gamis Hijau Keren', 75000, 2),
+	(109, 54, 6, 'asdd', 123312, 1);
 
 -- Dumping structure for table toko_baju.order_reviews
 CREATE TABLE IF NOT EXISTS `order_reviews` (
@@ -150,9 +135,12 @@ CREATE TABLE IF NOT EXISTS `product_reviews` (
   CONSTRAINT `product_reviews_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `produk` (`id`),
   CONSTRAINT `product_reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   CONSTRAINT `product_reviews_ibfk_3` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table toko_baju.product_reviews: ~1 rows (approximately)
+INSERT INTO `product_reviews` (`id`, `product_id`, `user_id`, `order_id`, `ulasan`, `rating`, `created_at`, `updated_at`) VALUES
+	(28, 6, 3, 51, 'ewqss', 5, '2025-07-18 20:34:38', NULL),
+	(29, 8, 11, 53, 'best', 5, '2025-07-18 23:46:48', NULL);
 
 -- Dumping structure for table toko_baju.produk
 CREATE TABLE IF NOT EXISTS `produk` (
@@ -165,16 +153,17 @@ CREATE TABLE IF NOT EXISTS `produk` (
   `stok` int DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Dumping data for table toko_baju.produk: ~6 rows (approximately)
 INSERT INTO `produk` (`id`, `nama`, `harga`, `gambar`, `deskripsi`, `kategori`, `stok`, `created_at`) VALUES
-	(1, 'baju kekok', 29191, '/uploads/56f2b0da-48d0-40d3-9c87-114615145867.jpg', 'bagus banget', 'Kekek', 245, '2025-05-19 04:23:05'),
-	(3, 'Rizq Dhiya Ulhaq', 213132, '/uploads/88424fb7-2e74-48ee-b22e-2f0cdc070697.jpg', 'wee', 'asd', 1232, '2025-05-20 04:12:15'),
-	(4, 'erfef e e e e ', 2123123213, '/uploads/97ebb304-40a9-48ee-90e4-7f3a9bfa118e.jpg', 'asdasdasd', 'qwqwqw ', 117, '2025-05-22 15:15:19'),
-	(5, 'wewe', 122121, '/uploads/5ab0b64e-ae94-4d04-9820-1717ced62544.jpg', 'asd as das ads ', 'qeqww', 5, '2025-06-12 03:56:08'),
-	(6, 'asdd', 123312, '/uploads/neqloewh97h7h7rt9skoikkvx.52.50', ' qwe qwe qw qw ewq', 'weqqew', 123115, '2025-06-12 04:36:07'),
-	(7, 'Baju Gamis Keren', 75000, '/uploads/i8u47p4a5kxtuetuno833ekb3.jpg', NULL, 'Baju Gamis', -1, '2025-06-17 15:44:02');
+	(1, 'baju kekok', 29191, '/uploads/56f2b0da-48d0-40d3-9c87-114615145867.jpg', 'bagus banget', 'Kekek', 243, '2025-05-19 04:23:05'),
+	(3, 'Rizq Dhiya Ulhaq', 213132, '/uploads/88424fb7-2e74-48ee-b22e-2f0cdc070697.jpg', 'wee', 'asd', 1231, '2025-05-20 04:12:15'),
+	(4, 'erfef e e e e ', 2123123213, '/uploads/97ebb304-40a9-48ee-90e4-7f3a9bfa118e.jpg', 'asdasdasd', 'qwqwqw ', 110, '2025-05-22 15:15:19'),
+	(5, 'wewe', 122121, '/uploads/5ab0b64e-ae94-4d04-9820-1717ced62544.jpg', 'asd as das ads ', 'qeqww', -4, '2025-06-12 03:56:08'),
+	(6, 'asdd', 123312, '/uploads/neqloewh97h7h7rt9skoikkvx.52.50', ' qwe qwe qw qw ewq', 'weqqew', 123088, '2025-06-12 04:36:07'),
+	(7, 'Baju Gamis Keren w', 75000, '/uploads/i8u47p4a5kxtuetuno833ekb3.jpg', '', NULL, -1, '2025-06-17 15:44:02'),
+	(8, 'Gamis Hijau Keren', 75000, '/uploads/q576uf0c7dlzodsr6lym7sjbq.png', 'Ayo mantap ini ', 'gamis', 2, '2025-07-18 14:36:54');
 
 -- Dumping structure for table toko_baju.users
 CREATE TABLE IF NOT EXISTS `users` (
@@ -188,16 +177,15 @@ CREATE TABLE IF NOT EXISTS `users` (
   `no_hp` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Dumping data for table toko_baju.users: ~6 rows (approximately)
+-- Dumping data for table toko_baju.users: ~5 rows (approximately)
 INSERT INTO `users` (`id`, `nama`, `foto`, `email`, `password`, `alamat`, `created_at`, `no_hp`) VALUES
-	(2, 'ww', '/uploads/zbdlm6gyy7u2k2mi84kalmouu.png', 'aer@gmail.com', '$2b$10$tMcDo6QzbNncRdglxkRufeFwN87GC/Mc1D/Vm.XgmUxnwhYP2vZta', '123123', '2025-04-12 03:39:23', NULL),
-	(3, 'testtt', '', 't@g.c', '$2b$10$vCBQlAloxsEvb1sAz7Ksm.L9R4V6C5rPDPf/aTD1sQH0YQQX7QfMy', 'sss', '2025-04-29 05:57:57', NULL),
+	(3, 'ainkuu ', '/uploads/sgr1l87ve2209buf80y69c8nw.53.51.png', 't@g.c', '$2b$10$vCBQlAloxsEvb1sAz7Ksm.L9R4V6C5rPDPf/aTD1sQH0YQQX7QfMy', 'BOJA NIH BOSS', '2025-04-29 05:57:57', NULL),
 	(6, 'Rizq Dhiya aa', NULL, 'rrawr@g.com', '$2b$10$xcUxKSEBHErsyFfgLwLcGe9uK3r9AbVvxJArBo3tunIkGDJ.dlT0m', 'boja ss', '2025-05-19 04:03:19', NULL),
 	(7, 'weqqw', NULL, 'cc@f.co', '$2b$10$ug2zg93nlp2Fg2bdbOalbeD6x0ag11dmzY9Q0RFWP3wifdfIXFJeC', 'wiqeieqw', '2025-05-20 04:45:31', NULL),
 	(8, 'qwewqe', NULL, 'wqqw@tr.c', '$2b$10$bgCB68/QDHekaGfCUwZ03O/Tf86ra5DiK4b5qKEKy0MesY9A03sTm', '1230123qw\n\n', '2025-05-20 08:04:38', NULL),
-	(9, 'x', NULL, 'c@g.c', '$2b$10$pAi68EP4uz.IhOwcKfCXAuY8sEnwE8JDkGiHOB7uqYcfsU4Bd6nlu', 'aoskdokasdok \n', '2025-06-17 15:38:42', NULL);
+	(11, 'RIZQ DHIYA ULHAQ', NULL, '111202113464@mhs.dinus.ac.id', '$2b$10$ypGfpvdJynzV3nDv5aJ/de5FtNsYwn8Bt/2fhHhoqrks5lE6m2Gw6', 'RT06/05, Bebengan, BOJA', '2025-07-18 16:23:45', '081312204790');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

@@ -71,6 +71,7 @@ export default function AdminOrders() {
             <tr>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">ID</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">User</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">No. HP</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Alamat</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Total</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
@@ -85,6 +86,7 @@ export default function AdminOrders() {
               <tr key={order.id}>
                 <td className="px-5 py-3 whitespace-nowrap">{order.id}</td>
                 <td className="px-5 py-3 whitespace-nowrap">{order.nama || order.user_id}</td>
+                <td className="px-5 py-3 whitespace-nowrap">{order.no_hp || '-'}</td>
                 <td className="px-5 py-3">
                   {order.alamat}
                   <br />

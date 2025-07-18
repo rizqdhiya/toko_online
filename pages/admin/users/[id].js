@@ -8,8 +8,9 @@ export default function EditUser() {
   const [form, setForm] = useState({ 
     nama: '', 
     email: '', 
-    password: '',
-    alamat: '' 
+    alamat: '',
+    no_hp: '',
+    password: ''
   });
 
   useEffect(() => {
@@ -20,7 +21,8 @@ export default function EditUser() {
           nama: data.nama,
           email: data.email,
           alamat: data.alamat || '',
-          // password: '' // Biarkan password kosong secara default, tapi jangan dihilangkan dari form
+          no_hp: data.no_hp || '',
+          password: '' // Selalu kosongkan password di form
         }));
     }
   }, [id]);
@@ -36,6 +38,7 @@ export default function EditUser() {
         nama: form.nama,
         email: form.email,
         alamat: form.alamat,
+        no_hp: form.no_hp,
         ...(form.password && { password: form.password }) // Hanya kirim password jika diisi
       };
 
@@ -91,6 +94,18 @@ export default function EditUser() {
                   onChange={handleChange}
                   rows={3}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="no_hp" className="block text-sm font-medium text-gray-700">No. HP</label>
+                <input
+                  type="tel"
+                  name="no_hp"
+                  id="no_hp"
+                  value={form.no_hp}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                  placeholder="08123456789"
                 />
               </div>
               <div>

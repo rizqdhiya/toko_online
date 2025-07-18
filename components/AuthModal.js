@@ -8,13 +8,14 @@ export default function AuthModal({ show, onClose }) {
     email: "",
     password: "",
     alamat: "",
+    no_hp: "",
   });
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Reset form dan pesan saat tab berganti
   useEffect(() => {
-    setForm({ nama: "", email: "", password: "", alamat: "" });
+    setForm({ nama: "", email: "", password: "", alamat: "", no_hp: "" });
     setMsg("");
   }, [tab]);
 
@@ -72,7 +73,7 @@ export default function AuthModal({ show, onClose }) {
 
     if (res.ok) {
       setMsg("Registrasi berhasil! Silakan login.");
-      setForm({ nama: "", email: "", password: "", alamat: "" });
+      setForm({ nama: "", email: "", password: "", alamat: "", no_hp: "" });
       setTab("login"); // Pindah ke tab login setelah register sukses
     } else {
       setMsg(data.message || "Registrasi gagal.");
@@ -207,6 +208,19 @@ export default function AuthModal({ show, onClose }) {
                 rows={2}
                 required
               ></textarea>
+            </div>
+            <div>
+              <label htmlFor="register-no_hp" className="block text-sm font-medium text-gray-700 mb-1">Nomor HP</label>
+              <input
+                id="register-no_hp"
+                name="no_hp"
+                type="tel"
+                placeholder="081234567890"
+                value={form.no_hp}
+                onChange={(e) => setForm({ ...form, no_hp: e.target.value })}
+                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-3"
+                required
+              />
             </div>
             <button
               type="submit"

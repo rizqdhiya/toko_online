@@ -4,9 +4,9 @@ import bcrypt from 'bcryptjs';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { nama, email, password, alamat } = req.body;
+  const { nama, email, password, alamat, no_hp } = req.body;
 
-  if (!nama || !email || !password || !alamat) {
+  if (!nama || !email || !password || !alamat || !no_hp) {
     return res.status(400).json({ message: 'Isi semua data' });
   }
 
@@ -19,8 +19,8 @@ export default async function handler(req, res) {
     const hashed = await bcrypt.hash(password, 10);
 
     await db.query(
-      'INSERT INTO users (nama, email, password, alamat) VALUES (?, ?, ?, ?)',
-      [nama, email, hashed, alamat]
+      'INSERT INTO users (nama, email, password, alamat, no_hp) VALUES (?, ?, ?, ?, ?)',
+      [nama, email, hashed, alamat, no_hp]
     );
 
     res.status(201).json({ message: 'Registrasi berhasil' });

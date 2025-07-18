@@ -1,14 +1,14 @@
 // pages/api/users/[id].js
 import db from '@/lib/db';
-import { withAuth } from '@/lib/auth';
-import bcrypt from 'bcrypt';
+import { withAdminAuth } from '@/lib/authadmin';
+import bcrypt from 'bcryptjs';
 
 async function handler(req, res) {
   const { id } = req.query;
 
   if (req.method === 'GET') {
     const [rows] = await db.query(
-      'SELECT id, nama, email, alamat FROM users WHERE id = ?', 
+      'SELECT id, nama, email, alamat, no_hp FROM users WHERE id = ?', 
       [id]
     );
     return res.status(200).json(rows[0]);
@@ -16,7 +16,7 @@ async function handler(req, res) {
 
   if (req.method === 'PUT') {
     try {
-      const { nama, email, alamat, password } = req.body;
+      const { nama, email, alamat, no_hp, password } = req.body;
       
       let updates = [];
       let params = [];
@@ -34,8 +34,12 @@ async function handler(req, res) {
         updates.push('alamat = ?');
         params.push(alamat);
       }
+      if (no_hp !== undefined) {
+        updates.push('no_hp = ?');
+        params.push(no_hp);
+      }
       if (password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10); // bcryptjs is async
         updates.push('password = ?');
         params.push(hashedPassword);
       }
@@ -57,7 +61,17 @@ async function handler(req, res) {
     }
   }
 
+  if (req.method === 'DELETE') {
+    try {
+      await db.query('DELETE FROM users WHERE id = ?', [id]);
+      return res.status(200).json({ message: 'User berhasil dihapus' });
+    } catch (error) {
+      console.error('Database error:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
   return res.status(405).end();
 }
 
-export default withAuth(handler);
+export default withAdminAuth(handler);

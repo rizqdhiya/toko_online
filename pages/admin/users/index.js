@@ -21,7 +21,9 @@ export default function UserList() {
     <AdminLayout>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Daftar Users</h1>
-        <Link href="/admin/users/tambah" className="bg-blue-600 text-white px-4 py-2 rounded">Tambah User</Link>
+        <Link href="/admin/users/tambah" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Tambah User
+        </Link>
       </div>
       <div className="overflow-hidden rounded-lg border border-gray-200 shadow-md m-5">
         <table className="w-full border-collapse bg-white text-left text-sm text-gray-500">
@@ -30,6 +32,7 @@ export default function UserList() {
               <th scope="col" className="px-6 py-4 font-medium text-gray-700">ID</th>
               <th scope="col" className="px-6 py-4 font-medium text-gray-700">Nama</th>
               <th scope="col" className="px-6 py-4 font-medium text-gray-700">Email</th>
+              <th scope="col" className="px-6 py-4 font-medium text-gray-700">No. HP</th>
               <th scope="col" className="px-6 py-4 font-medium text-gray-700">Aksi</th>
             </tr>
           </thead>
@@ -39,6 +42,7 @@ export default function UserList() {
                 <td className="p-4">{user.id}</td>
                 <td className="p-4 font-medium text-gray-700">{user.nama}</td>
                 <td className="p-4">{user.email}</td>
+                <td className="p-4">{user.no_hp || '-'}</td>
                 <td className="p-4 flex space-x-2">
                   <Link
                     href={`/admin/users/${user.id}`}

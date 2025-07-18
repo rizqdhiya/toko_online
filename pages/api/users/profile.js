@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     if (!token || !userId) {
       return res.status(401).json({ error: "Belum login" });
     }
-    const { nama, alamat, foto, password } = req.body;
+    const { nama, alamat, foto, password, no_hp } = req.body;
     let updates = [];
     let params = [];
 
@@ -24,6 +24,10 @@ export default async function handler(req, res) {
       updates.push('foto = ?');
       params.push(foto);
     }
+    if (no_hp !== undefined) {
+      updates.push('no_hp = ?');
+      params.push(no_hp);
+    }
     if (password) {
       const hashed = await bcrypt.hash(password, 10);
       updates.push('password = ?');
@@ -38,7 +42,7 @@ export default async function handler(req, res) {
   } else if (req.method === 'GET') {
     const { token, userId } = cookie.parse(req.headers.cookie || '');
     if (!token || !userId) return res.status(401).json({ error: "Belum login" });
-    const [rows] = await db.query('SELECT id, nama, email, alamat, foto FROM users WHERE id = ?', [userId]);
+    const [rows] = await db.query('SELECT id, nama, email, alamat, foto, no_hp FROM users WHERE id = ?', [userId]);
     return res.status(200).json(rows[0]);
   }
   return res.status(405).end();

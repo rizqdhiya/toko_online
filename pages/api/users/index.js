@@ -1,20 +1,22 @@
 import db from '@/lib/db';
-import { withAdminAuth } from '@/lib/authadmin'; // Ganti ke middleware admin
-import bcrypt from 'bcrypt';
+import { withAdminAuth } from '@/lib/authadmin';
+import bcrypt from 'bcryptjs';
 
 async function handler(req, res) {
   if (req.method === 'GET') {
-    const [rows] = await db.query('SELECT id, nama, email, alamat, created_at FROM users');
+    // Menambahkan no_hp dan mengurutkan
+    const [rows] = await db.query('SELECT id, nama, email, alamat, no_hp, created_at FROM users ORDER BY created_at DESC');
     return res.status(200).json(rows);
   }
 
   if (req.method === 'POST') {
     try {
-      const { nama, email, password, alamat } = req.body;
+      // Menambahkan no_hp dari body
+      const { nama, email, password, alamat, no_hp } = req.body;
       
       // Validasi input
-      if (!nama || !email || !password) {
-        return res.status(400).json({ error: 'Nama, email, dan password wajib diisi' });
+      if (!nama || !email || !password || !no_hp) {
+        return res.status(400).json({ error: 'Nama, email, password, dan No. HP wajib diisi' });
       }
       
       // Hash password
@@ -22,8 +24,8 @@ async function handler(req, res) {
       
       // Insert ke database
       const [result] = await db.query(
-        'INSERT INTO users (nama, email, password, alamat) VALUES (?, ?, ?, ?)',
-        [nama, email, hashedPassword, alamat]
+        'INSERT INTO users (nama, email, password, alamat, no_hp) VALUES (?, ?, ?, ?, ?)',
+        [nama, email, hashedPassword, alamat, no_hp]
       );
       
       return res.status(201).json({
@@ -32,6 +34,7 @@ async function handler(req, res) {
       });
       
     } catch (error) {
+      console.error("Error creating user:", error); // Logging error untuk debug
       // Handle duplicate email error
       if (error.code === 'ER_DUP_ENTRY') {
         return res.status(409).json({ error: 'Email sudah terdaftar' });
@@ -43,4 +46,4 @@ async function handler(req, res) {
   return res.status(405).end();
 }
 
-export default withAdminAuth(handler); // Ganti dari withAuth ke withAdminAuth
+export default withAdminAuth(handler);

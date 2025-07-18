@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
-import { FiCamera, FiEdit, FiClipboard, FiLogOut, FiUser, FiMail, FiMapPin, FiGift, FiStar, FiShoppingBag, FiCheckCircle, FiXCircle, FiClock, FiTruck, FiArchive } from "react-icons/fi";
+import { FiCamera, FiEdit, FiClipboard, FiLogOut, FiUser, FiMail, FiMapPin, FiGift, FiStar, FiShoppingBag, FiCheckCircle, FiXCircle, FiClock, FiTruck, FiArchive, FiPhone } from "react-icons/fi";
 
 // Komponen untuk menampilkan statistik
 const StatCard = ({ icon, label, value, color }) => (
@@ -37,7 +37,7 @@ const OrderHistoryItem = ({ order, onSelect }) => (
 
 export default function ProfilPage() {
   const [user, setUser] = useState(null);
-  const [form, setForm] = useState({ nama: "", email: "", alamat: "", password: "" });
+  const [form, setForm] = useState({ nama: "", email: "", alamat: "", no_hp: "", password: "" });
   const [foto, setFoto] = useState("");
   const [preview, setPreview] = useState("");
   const [msg, setMsg] = useState("");
@@ -72,7 +72,7 @@ export default function ProfilPage() {
         }
         const data = await res.json();
         setUser(data);
-        setForm({ nama: data.nama, email: data.email, alamat: data.alamat || "" });
+        setForm({ nama: data.nama, email: data.email, alamat: data.alamat || "", no_hp: data.no_hp || "" });
         setFoto(data.foto || "");
         setPreview(data.foto || "");
       } catch {
@@ -144,7 +144,7 @@ export default function ProfilPage() {
     if (fileInputRef.current) fileInputRef.current.click();
   };
 
-  // Handle update data profil (nama, email, alamat)
+  // Handle update data profil
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
@@ -237,7 +237,6 @@ export default function ProfilPage() {
       credentials: 'include',
     });
     alert('Pesanan telah diterima. Silakan beri ulasan!');
-    // Refresh orders untuk update status
     const updatedOrders = orders.map(o => o.id === selectedOrder.id ? {...o, status: 'diterima'} : o);
     setOrders(updatedOrders);
     setSelectedOrder({ ...selectedOrder, status: 'diterima' });
@@ -288,7 +287,6 @@ export default function ProfilPage() {
     }
     
     alert('Terima kasih atas ulasan Anda!');
-    // Refresh ulasan
     const res = await fetch(`/api/orders/${selectedOrder.id}/ulasan`);
     if(res.ok) setUlasanList(await res.json());
 
@@ -302,7 +300,7 @@ export default function ProfilPage() {
     const rating = ratingProduk[productId];
 
     await fetch(`/api/produk/${productId}/ulasan`, {
-      method: 'POST', // API route handles both create and update with POST
+      method: 'POST', 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ulasan,
@@ -314,12 +312,11 @@ export default function ProfilPage() {
 
     alert('Ulasan berhasil diperbarui!');
     
-    // Refresh ulasan
     const res = await fetch(`/api/orders/${selectedOrder.id}/ulasan`);
     if(res.ok) setUlasanList(await res.json());
 
     setSendingUlasan(false);
-    setEditUlasanProdukId(null); // Keluar dari mode edit
+    setEditUlasanProdukId(null); 
   };
 
 
@@ -354,19 +351,23 @@ export default function ProfilPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-                        <input type="text" className="w-full bg-gray-50 border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} required />
+                        <input type="text" name="nama" className="w-full bg-gray-50 border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" value={form.nama} onChange={e => setForm({ ...form, [e.target.name]: e.target.value })} required />
                     </div>
                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nomor HP</label>
+                        <input type="text" name="no_hp" className="w-full bg-gray-50 border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" value={form.no_hp} onChange={e => setForm({ ...form, [e.target.name]: e.target.value })} />
+                    </div>
+                    <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <input type="email" className="w-full p-3 rounded-lg bg-gray-200 text-gray-500 cursor-not-allowed" value={form.email} disabled />
                     </div>
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
-                        <textarea className="w-full bg-gray-50 border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 transition h-24" value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })}/>
+                        <textarea name="alamat" className="w-full bg-gray-50 border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 transition h-24" value={form.alamat} onChange={e => setForm({ ...form, [e.target.name]: e.target.value })}/>
                     </div>
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
-                        <input type="password" className="w-full bg-gray-50 border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" value={form.password || ""} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Kosongkan jika tidak ingin mengubah"/>
+                        <input type="password" name="password" className="w-full bg-gray-50 border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 transition" value={form.password || ""} onChange={e => setForm({ ...form, [e.target.name]: e.target.value })} placeholder="Kosongkan jika tidak ingin mengubah"/>
                     </div>
                 </div>
                 <div className="flex gap-4 pt-4">
@@ -390,7 +391,8 @@ export default function ProfilPage() {
                   <div className="text-center md:text-left">
                     <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">Selamat Datang, {form.nama}!</h1>
                     <p className="text-gray-500 mt-2 flex items-center justify-center md:justify-start gap-2"><FiMail/> {form.email}</p>
-                    <p className="text-gray-600 mt-2 flex items-center justify-center md:justify-start gap-2"><FiMapPin/> {form.alamat || <span className="italic">Alamat belum diatur</span>}</p>
+                    <p className="text-gray-500 mt-1 flex items-center justify-center md:justify-start gap-2"><FiPhone/> {form.no_hp || <span className="italic">No. HP belum diatur</span>}</p>
+                    <p className="text-gray-600 mt-1 flex items-center justify-center md:justify-start gap-2"><FiMapPin/> {form.alamat || <span className="italic">Alamat belum diatur</span>}</p>
                     <div className="mt-6 flex flex-col sm:flex-row gap-4">
                         <button className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold shadow-md flex items-center justify-center gap-2" onClick={() => setEditMode(true)}><FiEdit/> Edit Profil</button>
                         <button className="flex-1 bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-lg font-semibold shadow-md flex items-center justify-center gap-2" onClick={fetchOrders}><FiClipboard/> Riwayat Pesanan</button>
@@ -420,7 +422,7 @@ export default function ProfilPage() {
                                         <p className="text-sm text-gray-500">Total: Rp{order.total.toLocaleString('id-ID')}</p>
                                     </div>
                                 </div>
-                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">{order.status.replace('_', ' ')}</span>
+                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800">{order.status.replace(/_/g, ' ')}</span>
                             </li>
                         ))}
                         </ul>
@@ -556,7 +558,7 @@ export default function ProfilPage() {
                                         setBuktiPreview(URL.createObjectURL(file));
                                     }}
                                     />
-                                    {buktiPreview && <img src={buktiPreview} className="w-48 mt-4 rounded-lg shadow-sm" />}
+                                    {buktiPreview && <img src={buktiPreview} alt="Preview Bukti" className="w-48 mt-4 rounded-lg shadow-sm" />}
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <button
