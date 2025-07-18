@@ -1,45 +1,53 @@
 // components/AdminLayout.js
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 export default function AdminLayout({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
+  const menuItems = [
+    { label: "Dashboard", href: "/admin/dashboard" },
+    { label: "Kelola Produk", href: "/admin/produk" },
+    { label: "Kelola Users", href: "/admin/users" },
+    { label: "Konfirmasi Pesanan", href: "/admin/orders" },
+  ];
+
   useEffect(() => {
-    fetch('/api/admin/check')
+    fetch("/api/admin/check")
       .then((res) => res.json())
       .then((data) => {
         if (!data.loggedIn) {
-          router.push('/admin/login');
+          router.push("/admin/login");
         } else {
           setIsLoggedIn(true);
         }
       });
   }, [router]);
 
-  const handleLogout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    router.push('/admin/login');
-  };
-
   if (!isLoggedIn) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <div className="w-64 bg-white p-5 shadow-lg">
-        <h3 className="text-lg font-semibold">Admin Menu</h3>
-        <ul className="mt-4">
-          <li><a href="/admin/dashboard" className="block py-2 text-blue-600">Dashboard</a></li>
-          <li><a href="/admin/produk" className="block py-2 text-blue-600">Kelola Produk</a></li>
-          <li><a href="/admin/users" className="block py-2 text-blue-600">Kelola Users</a></li>
-          <li><a href="/admin/orders" className="block py-2 text-blue-600">Konfirmasi Pesanan</a></li>
-          <li><button onClick={handleLogout} className="block py-2 text-red-600">Logout</button></li>
-        </ul>
-      </div>
-      <div className="flex-1 p-6">
+      {/* Sidebar */}
+      <aside className="bg-white w-64 flex-shrink-0 h-screen overflow-y-auto border-r border-gray-200">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-800">Admin Panel</h2>
+          <nav className="mt-8">
+            <ul className="space-y-3">
+              {menuItems.map((item) => (
+                <li key={item.label}>
+                  <a href={item.href} className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">{item.label}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </aside>
+      {/* Main Content */}
+      <main className="flex-1 p-8">
         {children}
-      </div>
+      </main>
     </div>
   );
 }

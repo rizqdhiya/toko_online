@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
 import ModalUploadBukti from "@/components/ModalUploadBukti";
+import { FiTrash2, FiPlus, FiMinus } from 'react-icons/fi';
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
@@ -12,9 +13,9 @@ export default function CartPage() {
   const [buktiFile, setBuktiFile] = useState(null);
   const [buktiPreview, setBuktiPreview] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [successMsg, setSuccessMsg] = useState(""); // Tambahkan state baru di atas
+  const [successMsg, setSuccessMsg] = useState("");
   const [alamatPengiriman, setAlamatPengiriman] = useState("");
-  const [kotaTujuan, setKotaTujuan] = useState(""); // id kota tujuan
+  const [kotaTujuan, setKotaTujuan] = useState("");
   const [provinsiTujuan, setProvinsiTujuan] = useState("");
   const [ongkir, setOngkir] = useState(0);
   const [estimasiLoading, setEstimasiLoading] = useState(false);
@@ -28,13 +29,6 @@ export default function CartPage() {
     fetchCart();
   }, []);
 
-  // Ambil daftar kota dari backend (API RajaOngkir)
-  useEffect(() => {
-    fetch('/api/rajaongkir/kota')
-      .then(res => res.json())
-      .then(data => setDaftarKota(data.rajaongkir.results || []));
-  }, []);
-
   // Ambil daftar provinsi dari backend (API RajaOngkir)
   useEffect(() => {
     fetch('/api/rajaongkir/provinsi')
@@ -42,6 +36,7 @@ export default function CartPage() {
       .then(data => setDaftarProvinsi(data.rajaongkir.results || []));
   }, []);
 
+  // Ambil daftar kota berdasarkan provinsi
   useEffect(() => {
     if (!provinsiTujuan) {
       setDaftarKota([]);
@@ -111,7 +106,8 @@ export default function CartPage() {
         total: totalHarga + ongkir,
         alamat: alamatPengiriman,
         kota_id: kotaTujuan,
-        ongkir
+        ongkir,
+        provinsi_id: provinsiTujuan
       }),
       credentials: 'include',
     });
@@ -119,22 +115,18 @@ export default function CartPage() {
     setUpdating(false);
     if (res.ok) {
       setOrderId(data.orderId);
-      setShowUploadBukti(true); // Tampilkan form upload bukti
+      setShowUploadBukti(true);
     } else {
       alert(data.error || 'Checkout gagal');
     }
   };
 
-  // Hitung totalHarga sebelum handleCheckout
   const totalHarga = Array.isArray(cartItems)
-    ? cartItems.reduce(
-        (sum, item) => sum + item.harga * item.quantity,
-        0
-      )
+    ? cartItems.reduce((sum, item) => sum + item.harga * item.quantity, 0)
     : 0;
 
   if (loading) {
-    return <Layout>Memuat keranjang...</Layout>;
+    return <Layout><div className="text-center p-10">Memuat keranjang...</div></Layout>;
   }
 
   if (!Array.isArray(cartItems)) {
@@ -142,7 +134,7 @@ export default function CartPage() {
       <Layout>
         <div className="max-w-4xl mx-auto p-6">
           <h1 className="text-2xl font-bold mb-6">Keranjang Belanja</h1>
-          <div className="text-center py-8 text-red-500">
+          <div className="text-center py-8 text-red-500 bg-red-50 rounded-lg">
             {cartItems.error || "Terjadi kesalahan mengambil data keranjang"}
           </div>
         </div>
@@ -150,280 +142,198 @@ export default function CartPage() {
     );
   }
 
-  // Cek city_id tujuan
-  console.log(daftarKota.find(k => k.city_id === kotaTujuan));
-
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6">Keranjang Belanja</h1>
-        
-        {cartItems.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-600 mb-4">Keranjang belanja kosong</p>
-            <Link href="/" className="text-blue-600 hover:underline">
-              Lanjutkan Belanja
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex justify-between mb-4">
-              <Link
-                href="/"
-                className="px-4 py-2 border rounded hover:bg-gray-100">
-                Lanjut Belanja
-              </Link>
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                onClick={handleClearCart}
-                disabled={updating}
-              >
-                Hapus Semua Keranjang
-              </button>
+      <div className="bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Keranjang Belanja</h1>
+
+          {cartItems.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-lg shadow-sm">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Keranjang Anda kosong</h3>
+              <p className="mt-1 text-sm text-gray-500">Ayo temukan produk favoritmu!</p>
+              <div className="mt-6">
+                <Link href="/" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  Lanjutkan Belanja
+                </Link>
+              </div>
             </div>
-            {cartItems.map((item) => (
-              <div key={item.id} className="flex items-center border-b pb-4">
-                <img
-                  src={item.gambar}
-                  alt={item.nama}
-                  className="w-20 h-20 object-cover mr-4"
-                />
-                <div className="flex-1">
-                  <h3 className="font-medium">{item.nama}</h3>
-                  <div className="flex items-center gap-2 mt-2">
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+              {/* Daftar Produk di Keranjang */}
+              <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 space-y-6">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-medium text-gray-900">Produk ({cartItems.length})</h2>
                     <button
-                      className="px-2 py-1 bg-gray-200 rounded"
-                      onClick={() => handleQtyChange(item.id, item.quantity - 1)}
-                      disabled={item.quantity <= 1 || updating}
-                    >-</button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={item.stok || 99}
-                      value={item.quantity}
-                      onChange={e => {
-                        let val = Number(e.target.value);
-                        if (val > (item.stok || 99)) val = item.stok || 99;
-                        if (val < 1) val = 1;
-                        handleQtyChange(item.id, val);
-                      }}
-                      className="w-12 text-center border rounded"
-                      disabled={updating}
-                    />
-                    <button
-                      className="px-2 py-1 bg-gray-200 rounded"
-                      onClick={() => {
-                        if (item.quantity < (item.stok || 99)) {
-                          handleQtyChange(item.id, item.quantity + 1);
-                        }
-                      }}
-                      disabled={updating || item.quantity >= (item.stok || 99)}
-                    >+</button>
-                    <span className="text-xs text-gray-500 ml-2">
-                      stok: {item.stok}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 mt-1">
-                    Rp{item.harga.toLocaleString('id-ID')}
-                  </p>
+                        onClick={handleClearCart}
+                        disabled={updating}
+                        className="text-sm font-medium text-red-600 hover:text-red-800 disabled:text-gray-400"
+                    >
+                        Hapus Semua
+                    </button>
                 </div>
-                <p className="font-medium mr-4">
-                  Rp{(item.harga * item.quantity).toLocaleString('id-ID')}
-                </p>
-                <button
-                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-700"
-                  onClick={() => handleRemoveItem(item.id)}
-                  disabled={updating}
-                  title="Hapus produk ini"
-                >
-                  Hapus
-                </button>
+                <ul role="list" className="divide-y divide-gray-200">
+                  {cartItems.map((item) => (
+                    <li key={item.id} className="flex py-6">
+                      <div className="flex-shrink-0 w-24 h-24 border border-gray-200 rounded-md overflow-hidden">
+                        <img src={item.gambar} alt={item.nama} className="w-full h-full object-center object-cover" />
+                      </div>
+                      <div className="ml-4 flex-1 flex flex-col">
+                        <div>
+                          <div className="flex justify-between text-base font-medium text-gray-900">
+                            <h3>{item.nama}</h3>
+                            <p className="ml-4">Rp{(item.harga * item.quantity).toLocaleString('id-ID')}</p>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-500">Rp{item.harga.toLocaleString('id-ID')}</p>
+                        </div>
+                        <div className="flex-1 flex items-end justify-between text-sm">
+                          <div className="flex items-center border border-gray-300 rounded-md">
+                            <button onClick={() => handleQtyChange(item.id, item.quantity - 1)} disabled={item.quantity <= 1 || updating} className="p-2 text-gray-500 hover:text-gray-800 disabled:opacity-50"><FiMinus /></button>
+                            <input type="text" value={item.quantity} readOnly className="w-10 text-center border-l border-r" />
+                            <button onClick={() => { if (item.quantity < (item.stok || 99)) { handleQtyChange(item.id, item.quantity + 1); } }} disabled={updating || item.quantity >= (item.stok || 99)} className="p-2 text-gray-500 hover:text-gray-800 disabled:opacity-50"><FiPlus /></button>
+                          </div>
+                          <div className="flex">
+                            <button onClick={() => handleRemoveItem(item.id)} type="button" className="font-medium text-red-600 hover:text-red-800 flex items-center gap-1">
+                              <FiTrash2 />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
 
-            <div className="mt-6 text-xl font-bold text-right">
-              Total Produk: Rp{totalHarga.toLocaleString('id-ID')}
-            </div>
-            {ongkir > 0 && (
-              <div className="text-right text-lg mb-2">
-                Ongkir: Rp{ongkir.toLocaleString('id-ID')}
-              </div>
-            )}
-            <div className="text-2xl font-bold text-right mb-4">
-              Total Bayar: Rp{(totalHarga + ongkir).toLocaleString('id-ID')}
-            </div>
-
-            <div className="mt-6 mb-4 p-4 border rounded bg-gray-50">
-              <label className="block font-medium mb-1">Alamat Pengiriman</label>
-              <input
-                type="text"
-                className="w-full border p-2 rounded mb-2"
-                placeholder="Masukkan alamat lengkap"
-                value={alamatPengiriman}
-                onChange={e => setAlamatPengiriman(e.target.value)}
-                disabled={updating}
-              />
-              <label className="block font-medium mb-1 mt-2">Provinsi Tujuan</label>
-              <select
-                className="w-full border p-2 rounded mb-2"
-                value={provinsiTujuan}
-                onChange={e => setProvinsiTujuan(e.target.value)}
-                disabled={updating}
-              >
-                <option value="">Pilih Provinsi</option>
-                {daftarProvinsi.map(prov => (
-                  <option key={prov.province_id} value={prov.province_id}>
-                    {prov.province}
-                  </option>
-                ))}
-              </select>
-
-              <label className="block font-medium mb-1 mt-2">Kota Tujuan</label>
-              <select
-                className="w-full border p-2 rounded mb-2"
-                value={kotaTujuan}
-                onChange={e => setKotaTujuan(e.target.value)}
-                disabled={updating || !provinsiTujuan}
-              >
-                <option value="">Pilih Kota</option>
-                {daftarKota.map(kota => (
-                  <option key={kota.city_id} value={kota.city_id}>
-                    {kota.type} {kota.city_name}
-                  </option>
-                ))}
-              </select>
-              <label className="block font-medium mb-1 mt-2">Kurir</label>
-              <select
-                className="w-full border p-2 rounded mb-2"
-                value={kurir}
-                onChange={e => setKurir(e.target.value)}
-                disabled={updating}
-              >
-                <option value="jne">JNE</option>
-                <option value="pos">POS Indonesia</option>
-                <option value="tiki">TIKI</option>
-              </select>
-              <button
-                type="button"
-                className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
-                onClick={async () => {
-                  if (!kotaTujuan) return;
-                  setEstimasiLoading(true);
-                  setListOngkir([]);
-                  const res = await fetch('/api/rajaongkir/ongkir', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      origin: 181, // Kendal
-                      destination: kotaTujuan,
-                      weight: 1000,
-                      courier: kurir
-                    })
-                  });
-                  const data = await res.json();
-                  const costs = data.rajaongkir.results?.[0]?.costs || [];
-                  setListOngkir(costs);
-                  setOngkir(costs[0]?.cost[0]?.value || 0); // default pilih pertama
-                  setEstimasiLoading(false);
-                }}
-                disabled={estimasiLoading || !kotaTujuan}
-              >
-                {estimasiLoading ? "Menghitung Ongkir..." : "Cek Estimasi Ongkir"}
-              </button>
-              {listOngkir.length > 0 && (
-                <div className="mt-2 text-sm">
-                  <label className="block font-medium mb-1">Pilih Layanan:</label>
-                  <select
-                    className="w-full border p-2 rounded mb-2"
-                    value={ongkir}
-                    onChange={e => setOngkir(Number(e.target.value))}
-                  >
-                    {listOngkir.map((layanan, idx) => (
-                      <option key={idx} value={layanan.cost[0].value}>
-                        {layanan.service} - {layanan.description} (Rp{layanan.cost[0].value.toLocaleString('id-ID')}, estimasi {layanan.cost[0].etd} hari)
-                      </option>
-                    ))}
-                  </select>
-                  <div>
-                    Estimasi Ongkir: <b>Rp{ongkir.toLocaleString('id-ID')}</b>
+              {/* Ringkasan & Pengiriman */}
+              <div className="lg:col-span-1 space-y-6">
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">Alamat Pengiriman</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="alamat" className="block text-sm font-medium text-gray-700">Alamat Lengkap</label>
+                      <textarea id="alamat" rows={3} className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Masukkan alamat lengkap" value={alamatPengiriman} onChange={e => setAlamatPengiriman(e.target.value)} disabled={updating} />
+                    </div>
+                    <div>
+                      <label htmlFor="provinsi" className="block text-sm font-medium text-gray-700">Provinsi</label>
+                      <select id="provinsi" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" value={provinsiTujuan} onChange={e => setProvinsiTujuan(e.target.value)} disabled={updating}>
+                        <option value="">Pilih Provinsi</option>
+                        {daftarProvinsi.map(prov => <option key={prov.province_id} value={prov.province_id}>{prov.province}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="kota" className="block text-sm font-medium text-gray-700">Kota/Kabupaten</label>
+                      <select id="kota" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" value={kotaTujuan} onChange={e => setKotaTujuan(e.target.value)} disabled={updating || !provinsiTujuan}>
+                        <option value="">Pilih Kota/Kabupaten</option>
+                        {daftarKota.map(kota => <option key={kota.city_id} value={kota.city_id}>{kota.type} {kota.city_name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="kurir" className="block text-sm font-medium text-gray-700">Kurir</label>
+                      <select id="kurir" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" value={kurir} onChange={e => setKurir(e.target.value)} disabled={updating}>
+                        <option value="jne">JNE</option>
+                        <option value="pos">POS Indonesia</option>
+                        <option value="tiki">TIKI</option>
+                      </select>
+                    </div>
+                    <button type="button" className="w-full text-sm bg-blue-50 text-blue-700 font-medium py-2 px-4 rounded-md hover:bg-blue-100 disabled:opacity-50" onClick={async () => { if (!kotaTujuan) return; setEstimasiLoading(true); setListOngkir([]); const res = await fetch('/api/rajaongkir/ongkir', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ origin: 181, destination: kotaTujuan, weight: 1000, courier: kurir }) }); const data = await res.json(); const costs = data.rajaongkir.results?.[0]?.costs || []; setListOngkir(costs); setOngkir(costs[0]?.cost[0]?.value || 0); setEstimasiLoading(false); }} disabled={estimasiLoading || !kotaTujuan}>
+                      {estimasiLoading ? "Menghitung..." : "Cek Estimasi Ongkir"}
+                    </button>
+                    {listOngkir.length > 0 && (
+                      <div>
+                        <label htmlFor="layanan" className="block text-sm font-medium text-gray-700">Pilih Layanan</label>
+                        <select id="layanan" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" value={ongkir} onChange={e => setOngkir(Number(e.target.value))}>
+                          {listOngkir.map((layanan, idx) => <option key={idx} value={layanan.cost[0].value}>{layanan.service} - {layanan.description} (Rp{layanan.cost[0].value.toLocaleString('id-ID')})</option>)}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-
-            <div className="mt-6 flex justify-end gap-4">
-              <Link
-                href="/"
-                className="px-4 py-2 border rounded hover:bg-gray-100">
-                Lanjut Belanja
-              </Link>
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={handleCheckout}
-                disabled={updating || cartItems.length === 0}
-              >
-                Checkout
-              </button>
-            </div>
-
-            {/* Komponen upload bukti bayar */}
-            <ModalUploadBukti
-              open={showUploadBukti}
-              onClose={() => {
-                setShowUploadBukti(false);
-                setBuktiFile(null);
-                setBuktiPreview("");
-              }}
-              totalHarga={totalHarga + ongkir} // <-- pastikan ini total akhir
-              buktiFile={buktiFile}
-              setBuktiFile={setBuktiFile}
-              buktiPreview={buktiPreview}
-              setBuktiPreview={setBuktiPreview}
-              uploading={uploading}
-              onUpload={async () => {
-                if (!buktiFile || !orderId) return;
-                setUploading(true);
-                const formData = new FormData();
-                formData.append('file', buktiFile);
-                const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (res.ok && data.url) {
-                  await fetch(`/api/orders/${orderId}/bukti`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bukti_bayar: data.url }),
-                    credentials: 'include',
-                  });
-                  setShowUploadBukti(false);
-                  setBuktiFile(null);
-                  setBuktiPreview("");
-                  setSuccessMsg("Bukti pembayaran berhasil dikirim. Menunggu konfirmasi admin.");
-                }
-                setUploading(false);
-              }}
-            />
-
-            {/* Modal sukses */}
-            {successMsg && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs text-center">
-                  <div className="text-green-500 text-4xl mb-2">✔️</div>
-                  <div className="mb-4">{successMsg}</div>
-                  <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
-                    onClick={() => {
-                      setSuccessMsg("");
-                      fetchCart();
-                    }}
-                  >
-                    OK
-                  </button>
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-lg font-medium text-gray-900 mb-4">Ringkasan Pesanan</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Subtotal Produk</span>
+                      <span>Rp{totalHarga.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Ongkos Kirim</span>
+                      <span>Rp{ongkir.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-4 mt-4 flex items-center justify-between text-base font-medium text-gray-900">
+                      <p>Total Pembayaran</p>
+                      <p>Rp{(totalHarga + ongkir).toLocaleString('id-ID')}</p>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <button onClick={handleCheckout} disabled={updating || cartItems.length === 0 || !ongkir} className="w-full bg-blue-600 border border-transparent rounded-md shadow-sm py-3 px-4 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400">
+                      Checkout
+                    </button>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
+
+      <ModalUploadBukti
+        open={showUploadBukti}
+        onClose={async () => {
+          setShowUploadBukti(false);
+          setBuktiFile(null);
+          setBuktiPreview("");
+          await fetch('/api/cart', { method: 'DELETE' });
+          setSuccessMsg("Checkout berhasil! Silakan selesaikan pembayaran dan upload bukti pada halaman profil di menu Riwayat Pesanan.");
+          fetchCart();
+        }}
+        totalHarga={totalHarga + ongkir}
+        buktiFile={buktiFile}
+        setBuktiFile={setBuktiFile}
+        buktiPreview={buktiPreview}
+        setBuktiPreview={setBuktiPreview}
+        uploading={uploading}
+        onUpload={async () => {
+          if (!buktiFile || !orderId) return;
+          setUploading(true);
+          const formData = new FormData();
+          formData.append('file', buktiFile);
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          const data = await res.json();
+          if (res.ok && data.url) {
+            await fetch(`/api/orders/${orderId}/bukti`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bukti_bayar: data.url }),
+              credentials: 'include',
+            });
+            setShowUploadBukti(false);
+            setBuktiFile(null);
+            setBuktiPreview("");
+            setSuccessMsg("Bukti pembayaran berhasil dikirim. Menunggu konfirmasi admin.");
+            await fetch('/api/cart', { method: 'DELETE' });
+            fetchCart();
+          }
+          setUploading(false);
+        }}
+      />
+
+      {successMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setSuccessMsg("")}>
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm text-center" onClick={e => e.stopPropagation()}>
+            <div className="text-green-500 text-5xl mb-3">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <p className="mb-4 text-gray-700">{successMsg}</p>
+            <button className="bg-blue-600 text-white px-6 py-2 rounded-md" onClick={() => { setSuccessMsg(""); }}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

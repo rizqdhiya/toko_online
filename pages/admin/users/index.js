@@ -1,4 +1,3 @@
-// pages/admin/users/index.js
 import AdminLayout from '@/components/AdminLayout';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -24,29 +23,41 @@ export default function UserList() {
         <h1 className="text-xl font-bold">Daftar Users</h1>
         <Link href="/admin/users/tambah" className="bg-blue-600 text-white px-4 py-2 rounded">Tambah User</Link>
       </div>
-      <table className="w-full border text-left">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2">ID</th>
-            <th className="p-2">Nama</th>
-            <th className="p-2">Email</th>
-            <th className="p-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map(users => (
-            <tr key={users.id} className="border-t">
-              <td className="p-2">{users.id}</td>
-              <td className="p-2">{users.nama}</td>
-              <td className="p-2">{users.email}</td>
-              <td className="p-2 space-x-2">
-                <Link href={`/admin/users/${users.id}`} className="text-blue-600">Edit</Link>
-                <button onClick={() => handleDelete(users.id)} className="text-red-600">Hapus</button>
-              </td>
+      <div className="overflow-hidden rounded-lg border border-gray-200 shadow-md m-5">
+        <table className="w-full border-collapse bg-white text-left text-sm text-gray-500">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-4 font-medium text-gray-700">ID</th>
+              <th scope="col" className="px-6 py-4 font-medium text-gray-700">Nama</th>
+              <th scope="col" className="px-6 py-4 font-medium text-gray-700">Email</th>
+              <th scope="col" className="px-6 py-4 font-medium text-gray-700">Aksi</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100 border-t border-gray-100">
+            {users.map(user => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="p-4">{user.id}</td>
+                <td className="p-4 font-medium text-gray-700">{user.nama}</td>
+                <td className="p-4">{user.email}</td>
+                <td className="p-4 flex space-x-2">
+                  <Link
+                    href={`/admin/users/${user.id}`}
+                    className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-100 rounded-md"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(user.id)}
+                    className="px-3 py-1 text-xs font-medium text-red-600 hover:text-red-800 bg-red-100 rounded-md"
+                  >
+                    Hapus
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </AdminLayout>
   );
 }

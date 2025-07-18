@@ -2,28 +2,34 @@ import db from '@/lib/db';
 import { withAdminAuth } from '@/lib/authadmin'; // gunakan middleware admin
 
 async function handler(req, res) {
-  // GET produk (publik, support search)
+  // GET produk (publik, support search dan kategori)
   if (req.method === 'GET') {
     try {
-      const search = req.query.search || '';
-      let rows;
-      if (search) {
-        const [result] = await db.query(
-          `SELECT id, nama, harga, gambar, kategori, stok 
-           FROM produk
-           WHERE nama LIKE ?
-           ORDER BY created_at DESC`,
-          [`%${search}%`]
-        );
-        rows = result;
-      } else {
-        const [result] = await db.query(
-          `SELECT id, nama, harga, gambar, kategori, stok 
-           FROM produk
-           ORDER BY created_at DESC`
-        );
-        rows = result;
+      const { search = '', kategori = '' } = req.query;
+      let query = 'SELECT id, nama, harga, gambar, kategori, stok FROM produk WHERE 1=1';
+      const params = [];
+
+      if (kategori) {
+        query += ' AND kategori = ?';
+        params.push(kategori);
       }
+
+      if (search) {
+        query += ' AND nama LIKE ?';
+        params.push(`%${search}%`);
+      }
+      
+      if (req.query.random) {
+          const limit = Number(req.query.limit) || 4;
+          const [rows] = await db.query(
+            `SELECT id, nama, harga, gambar FROM produk ORDER BY RAND() LIMIT ?`, [limit]
+          );
+          return res.status(200).json(rows);
+      }
+
+      query += ' ORDER BY created_at DESC';
+
+      const [rows] = await db.query(query, params);
       return res.status(200).json(rows);
     } catch (error) {
       console.error('Error fetching products:', error);

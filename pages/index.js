@@ -1,8 +1,6 @@
 import BannerSlider from "@/components/BannerSlider";
-import Navbar from "@/components/Navbar";
 import Layout from "@/components/Layout";
 import ProductCard from "@/components/ProductCard";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
@@ -11,16 +9,20 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
-  const search = router.query.search || "";
+  const { search, kategori } = router.query;
 
   useEffect(() => {
+    if(!router.isReady) return;
+
     const fetchProducts = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        const url = search
-          ? `/api/produk?search=${encodeURIComponent(search)}`
-          : `/api/produk`;
-        const response = await fetch(url);
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (kategori) params.append('kategori', kategori);
+        
+        const response = await fetch(`/api/produk?${params.toString()}`);
         if (!response.ok) throw new Error('Gagal memuat produk');
         const data = await response.json();
         setProducts(data);
@@ -31,7 +33,7 @@ export default function Home() {
       }
     };
     fetchProducts();
-  }, [search]);
+  }, [search, kategori, router.isReady]);
 
   if (isLoading) {
     return (
@@ -52,17 +54,26 @@ export default function Home() {
       </Layout>
     );
   }
+  
+  const pageTitle = kategori ? `Kategori: ${kategori}` : "Semua Produk";
 
   return (
     <Layout>
-      {/* BannerSlider hanya tampil jika tidak sedang search */}
-      {!search && <BannerSlider />}
+      {/* BannerSlider hanya tampil jika tidak sedang search atau filter kategori */}
+      {!search && !kategori && <BannerSlider />}
       <div className="p-6 max-w-7xl mx-auto">
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <h1 className="text-2xl font-bold mb-6">{pageTitle}</h1>
+        {products.length > 0 ? (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-gray-500">Produk tidak ditemukan.</p>
+          </div>
+        )}
       </div>
     </Layout>
   );

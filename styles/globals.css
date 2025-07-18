@@ -32,3 +32,17 @@ body {
     @apply transition-all duration-200 ease-in-out;
   }
 }
+.swiper-pagination-bullet {
+  background-color: #fff !important;
+  opacity: 0.6 !important;
+  width: 10px !important;
+  height: 10px !important;
+  transition: all 0.3s ease;
+}
+
+.swiper-pagination-bullet-active {
+  background-color: #2563eb !important; 
+  opacity: 1 !important;
+  width: 24px !important;
+  border-radius: 5px !important;
+}
