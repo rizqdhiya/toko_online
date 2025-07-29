@@ -4,10 +4,10 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '', // kosongkan jika tidak ada port, atau isi sesuai kebutuhan
-        pathname: '/**',
+        protocol: 'https',
+        hostname: 'ohsvhwdlfgncojklgslh.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
       },
     ],
   },

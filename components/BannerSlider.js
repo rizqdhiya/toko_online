@@ -23,7 +23,7 @@ export default function BannerSlider() {
         <SwiperSlide>
           <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
             <img
-              src="/banner1.jpg"
+              src="/bane.jpg"
               alt="Promo 1"
               className="w-full h-full object-cover"
             />
@@ -37,7 +37,7 @@ export default function BannerSlider() {
         <SwiperSlide>
           <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
             <img
-              src="/banner3.jpg"
+              src="/banee.jpg"
               alt="Promo 2"
               className="w-full h-full object-cover"
             />

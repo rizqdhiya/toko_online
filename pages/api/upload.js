@@ -1,8 +1,10 @@
 // pages/api/upload.js
+
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
-import path from 'path';
+import { supabase } from '../../lib/supabaseClient'; // Pastikan path ini benar
 
+// Menonaktifkan bodyParser bawaan Next.js agar formidable bisa bekerja
 export const config = {
   api: {
     bodyParser: false,
@@ -10,20 +12,53 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  const uploadDir = path.join(process.cwd(), '/public/uploads');
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  const form = new IncomingForm();
 
-  const form = new IncomingForm({ uploadDir, keepExtensions: true });
-
-  form.parse(req, (err, fields, files) => {
+  form.parse(req, async (err, fields, files) => {
+    // 1. Cek jika ada error atau tidak ada file yang diupload
     if (err || !files.file) {
-      return res.status(400).json({ error: 'Gagal upload file' });
+      console.error('Error parsing form:', err);
+      return res.status(400).json({ error: 'Gagal memproses file upload.' });
     }
+
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
-    const fileName = path.basename(file.filepath || file.path);
-    const url = `/uploads/${fileName}`;
-    return res.status(200).json({ url });
+    const filePath = file.filepath;
+    const fileName = `${Date.now()}_${file.originalFilename}`;
+    const bucketName = 'upload'; 
+
+    try {
+      // 2. Baca file yang diupload (yang disimpan sementara oleh formidable)
+      const fileContent = fs.readFileSync(filePath);
+
+      // 3. Upload file ke Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, fileContent, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // 4. Dapatkan URL publik dari file yang baru diupload
+      const { data } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+
+      const publicUrl = data.publicUrl;
+
+      // 5. Kirim URL kembali sebagai respons
+      return res.status(200).json({ url: publicUrl });
+
+    } catch (error) {
+      console.error('Supabase upload error:', error);
+      return res.status(500).json({ error: 'Gagal mengupload file ke storage.', details: error.message });
+    }
   });
 }
