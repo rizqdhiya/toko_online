@@ -1,49 +1,67 @@
-import db from '@/lib/db';
+import db from '../../lib/db';
 import * as cookie from 'cookie';
-import fetch from 'node-fetch'; // jika belum ada
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).end();
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-  const { token, userId } = cookie.parse(req.headers.cookie || '');
-  if (!token || !userId) {
-    return res.status(401).json({ error: 'Belum login' });
-  }
-  const { items, total, alamat, kota_id, ongkir, provinsi_id } = req.body;
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'Keranjang kosong' });
-  }
-  console.log('ITEMS CHECKOUT:', items);
-  // Ambil nama kota & provinsi dari RajaOngkir
-  const kotaRes = await fetch(`https://api.rajaongkir.com/starter/city?id=${kota_id}`, {
-    headers: { key: process.env.RAJAONGKIR_API_KEY }
-  });
-  const kotaData = await kotaRes.json();
-  const kotaResult = Array.isArray(kotaData.rajaongkir.results)
-    ? kotaData.rajaongkir.results[0]
-    : kotaData.rajaongkir.results;
 
-  const kotaNama = kotaResult.city_name;
-  const provinsiNama = kotaResult.province;
+  try {
+    const cookies = cookie.parse(req.headers.cookie || '');
+    const userId = cookies.userId;
 
-  const [orderResult] = await db.query(
-    'INSERT INTO orders (user_id, total, alamat, kota_id, ongkir, kota_nama, provinsi_nama, created_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)',
-    [userId, total, alamat, kota_id, ongkir, kotaNama, provinsiNama, 'menunggu_pembayaran']
-  );
-  const orderId = orderResult.insertId;
-  for (const item of items) {
-    const produkId = item.produk_id ?? item.product_id;
-    const qty = item.qty ?? item.quantity;
-    await db.query(
-      'INSERT INTO order_items (order_id, produk_id, nama, harga, qty) VALUES (?, ?, ?, ?, ?)',
-      [orderId, produkId, item.nama, item.harga, qty]
+    if (!userId) {
+      return res.status(401).json({ error: 'Anda harus login untuk checkout' });
+    }
+
+    const {
+      items,
+      total,
+      alamat,
+      kota_nama,
+      ongkir,
+    } = req.body;
+
+    if (!items || items.length === 0 || !total || !alamat || !kota_nama || ongkir === undefined) {
+      return res.status(400).json({ error: 'Data tidak lengkap untuk checkout' });
+    }
+
+    const fullAlamat = `${alamat}, ${kota_nama}`;
+    const areaParts = kota_nama.split(', ');
+    const dbKotaNama = areaParts.length > 1 ? areaParts[1] : kota_nama;
+    const dbProvinsiNama = areaParts.length > 2 ? areaParts[2] : '';
+
+    const [orderResult] = await db.query(
+      'INSERT INTO orders (user_id, total, alamat, kota_nama, provinsi_nama, ongkir, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+      [userId, total, fullAlamat, dbKotaNama, dbProvinsiNama, ongkir, 'menunggu_pembayaran']
     );
+
+    const orderId = orderResult.insertId;
+
+    // ### PERBAIKAN DI SINI ###
+    // Mengganti `item.produk_id` menjadi `item.product_id` agar cocok dengan data dari frontend
+    const orderItems = items.map(item => [
+      orderId,
+      item.product_id, // <-- INI YANG DIGANTI
+      item.quantity,
+      item.harga,
+      item.nama,
+    ]);
+
     await db.query(
-      'UPDATE produk SET stok = stok - ? WHERE id = ?',
-      [qty, produkId]
+      'INSERT INTO order_items (order_id, produk_id, qty, harga, nama) VALUES ?',
+      [orderItems]
     );
+
+    // Kurangi stok produk menggunakan ID yang benar
+    for (const item of items) {
+      await db.query('UPDATE produk SET stok = stok - ? WHERE id = ?', [item.quantity, item.product_id]);
+    }
+    
+    res.status(200).json({ success: true, orderId: orderId });
+
+  } catch (error) {
+    console.error('Checkout API error:', error);
+    res.status(500).json({ error: 'Terjadi kesalahan pada server.', details: error.message || error });
   }
- 
-  return res.status(200).json({ message: 'Checkout berhasil', orderId });
 }
