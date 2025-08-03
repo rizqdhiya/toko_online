@@ -14,9 +14,9 @@ export default async function handler(req, res) {
 
   // Siapkan item untuk request ke Biteship
   const items = [{
-    name: 'Produk', // Nama produk bisa digeneralisasi
+    name: 'Produk', 
     description: 'Paket pesanan',
-    value: 1000, // Nilai barang (opsional, bisa diisi nilai minimum)
+    value: 1000,
     weight: Number(weight), // Pastikan weight adalah angka
     quantity: 1,
   }];

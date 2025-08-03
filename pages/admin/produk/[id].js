@@ -12,23 +12,33 @@ export default function EditProduk() {
     kategori: '',
     stok: 0
   });
+  const [variants, setVariants] = useState([]); // [{id, warna, stok, images: [url], previews: [url]}]
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (id) {
-      fetch(`/api/produk/${id}`)
+      fetch(`/api/produk/${id}/varian`)
         .then(res => res.json())
         .then(data => {
-          // Handle null values from database
-          setForm({
-            nama: data.nama || '',
-            harga: data.harga || 0,
-            gambar: data.gambar || '',
-            deskripsi: data.deskripsi || '',
-            kategori: data.kategori || '',
-            stok: data.stok || 0
-          });
+          setVariants(
+            (data.variants || []).map(v => ({
+              ...v,
+              images: (data.images || []).filter(img => img.variant_id === v.id).map(img => img.url),
+              previews: (data.images || []).filter(img => img.variant_id === v.id).map(img => img.url),
+            }))
+          );
         });
+      fetch(`/api/produk/${id}`)
+        .then(res => res.json())
+        .then(data => setForm({
+          nama: data.nama || '',
+          harga: data.harga || 0,
+          gambar: data.gambar || '',
+          deskripsi: data.deskripsi || '',
+          kategori: data.kategori || '',
+          stok: data.stok || 0
+        }));
     }
   }, [id]);
 
@@ -40,40 +50,73 @@ export default function EditProduk() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setIsUploading(true);
-    
     const formData = new FormData();
-    formData.append('gambar', file);
-
+    formData.append('file', file);
     try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
+      const response = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await response.json();
-      setForm({ ...form, gambar: data.filename });
-    } catch (error) {
-      alert('Gagal mengupload gambar');
+      setForm({ ...form, gambar: data.url });
     } finally {
       setIsUploading(false);
     }
   };
 
+  const handleVariantImages = async (idx, files) => {
+    const newVariants = [...variants];
+    newVariants[idx].previews = [];
+    newVariants[idx].images = [];
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        newVariants[idx].images.push(data.url);
+        newVariants[idx].previews.push(data.url);
+      }
+    }
+    setVariants(newVariants);
+  };
+
+  const handleAddVariant = () => {
+    setVariants([...variants, { warna: '', stok: 0, images: [], previews: [] }]);
+  };
+
+  const handleRemoveVariant = (idx) => {
+    setVariants(variants.filter((_, i) => i !== idx));
+  };
+
+  const handleVariantChange = (idx, field, value) => {
+    const newVariants = [...variants];
+    newVariants[idx][field] = value;
+    setVariants(newVariants);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
+      const body = {
+        ...form,
+        variants: variants.map(v => ({
+          id: v.id, // penting untuk update/hapus di backend
+          warna: v.warna,
+          stok: v.stok,
+          images: v.images
+        }))
+      };
       const response = await fetch(`/api/produk/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
-      
       if (!response.ok) throw new Error('Gagal mengupdate produk');
-      
       router.push('/admin/produk');
     } catch (error) {
       alert(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -168,12 +211,72 @@ export default function EditProduk() {
                   />
                 </div>
               </div>
+              <div>
+    <h2 className="text-lg font-semibold text-gray-800 mb-4">Variants</h2>
+    {variants.map((variant, idx) => (
+      <div key={variant.id || idx} className="bg-gray-50 p-4 rounded-md shadow-sm mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Warna</label>
+            <input
+              type="text"
+              value={variant.warna}
+              onChange={e => handleVariantChange(idx, 'warna', e.target.value)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Stok</label>
+            <input
+              type="number"
+              value={variant.stok}
+              onChange={e => handleVariantChange(idx, 'stok', Number(e.target.value))}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Gambar</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={e => handleVariantImages(idx, e.target.files)}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+            />
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {variant.previews?.map((preview, i) => (
+                <img key={i} src={preview} alt={`Preview ${i + 1}`} className="w-16 h-16 object-cover rounded" />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end mt-4">
+          <button
+            type="button"
+            onClick={() => handleRemoveVariant(idx)}
+            className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+          >
+            Hapus Variant
+          </button>
+        </div>
+      </div>
+    ))}
+    <button
+      type="button"
+      onClick={handleAddVariant}
+      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+    >
+      Tambah Variant
+    </button>
+  </div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                disabled={isUploading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                disabled={isUploading || isSubmitting}
               >
-                {isUploading ? 'Menyimpan...' : 'Update Produk'}
+                {isSubmitting ? 'Menyimpan...' : 'Update Produk'}
               </button>
             </form>
           </div>

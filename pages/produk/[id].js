@@ -16,7 +16,14 @@ export default function ProductDetail() {
   const [ulasanList, setUlasanList] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
   const [rekomendasi, setRekomendasi] = useState([]);
-
+  const [variants, setVariants] = useState([]);
+  const [images, setImages] = useState([]);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [displayImages, setDisplayImages] = useState([]);
+  const [activeImage, setActiveImage] = useState('');
+  const [activeThumbnails, setActiveThumbnails] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  
   useEffect(() => {
     if (!id) return;
 
@@ -71,10 +78,55 @@ export default function ProductDetail() {
       }
     };
 
+    // Fetch variasi & gambar
+    const fetchVarian = async () => {
+      const res = await fetch(`/api/produk/${id}/varian`);
+      if (res.ok) {
+        const data = await res.json();
+        setVariants(data.variants || []);
+        setImages(data.images || []);
+        setSelectedVariant(null);
+        setDisplayImages((data.images || []).filter(img => !img.variant_id));
+      }
+    };
+
     fetchProduct();
     fetchUlasan();
     fetchRekomendasi();
+    fetchVarian();
   }, [id]);
+
+  // Update thumbnails & gambar utama saat data/ganti varian
+  useEffect(() => {
+    let thumbs = [];
+    if (!selectedVariant) {
+      thumbs = images.filter(img => !img.variant_id);
+    } else {
+      thumbs = images.filter(img => img.variant_id === selectedVariant.id);
+      if (thumbs.length === 0) thumbs = images.filter(img => !img.variant_id);
+    }
+    setActiveThumbnails(thumbs);
+    setActiveImage(thumbs[0]?.url || product?.gambar || '/default-product.png');
+  }, [selectedVariant, images, product]);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [images, variants]);
+  useEffect(() => {
+    setSelectedVariant(null);
+    setActiveIndex(0);
+  }, [id]);
+  // Deklarasi allThumbnails di atas useEffect
+  const allThumbnails = [
+    ...images.filter(img => !img.variant_id),
+    ...variants.flatMap(variant =>
+      images.filter(img => img.variant_id === variant.id)
+    ),
+  ];
+
+  useEffect(() => {
+    setActiveImage(allThumbnails[activeIndex]?.url || product?.gambar || '/default-product.png');
+  }, [activeIndex, allThumbnails, product]);
 
   const handleAddToCart = async () => {
     const token = localStorage.getItem('authToken');
@@ -88,7 +140,11 @@ export default function ProductDetail() {
       const res = await fetch('/api/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: product.id, quantity: 1 }),
+        body: JSON.stringify({
+          product_id: product.id,
+          quantity: 1,
+          variant_id: selectedVariant ? selectedVariant.id : null
+        }),
         credentials: 'include',
       });
       const text = await res.text();
@@ -111,7 +167,26 @@ export default function ProductDetail() {
     setBtnLoading(false);
   };
 
-  if (loading) {
+  const handleSelectVariant = (variant) => {
+
+    if (selectedVariant?.id === variant.id) {
+      setSelectedVariant(null); // reset ke produk utama
+      setActiveIndex(0);
+    } else {
+      setSelectedVariant(variant);
+      const idx = allThumbnails.findIndex(img => img.variant_id === variant.id);
+      setActiveIndex(idx !== -1 ? idx : 0);
+    }
+  };
+
+  let displayProductName = '';
+  if (product) {
+    displayProductName = selectedVariant
+      ? `${product.nama} ${selectedVariant.warna}`
+      : product.nama;
+  }
+
+  if (loading || !product) {
     return (
       <Layout>
         <div className="text-center py-8">
@@ -136,20 +211,63 @@ export default function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Gambar Produk */}
-          <div className="relative aspect-square bg-gradient-to-br from-blue-100 to-white rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
-            <Image
-              src={product.gambar || '/default-product.jpg'}
-              alt={product.nama}
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
+          <div className="relative flex flex-col items-center">
+            {/* Gambar utama */}
+            <div className="relative aspect-square w-full bg-gradient-to-br from-blue-100 to-white rounded-2xl overflow-hidden shadow-lg flex items-center justify-center mb-4">
+              <Image
+                src={activeImage}
+                alt={displayProductName}
+                fill
+                className="object-contain"
+                priority
+              />
+              {/* Info varian di pojok */}
+              {allThumbnails[activeIndex]?.variant_id && (
+                <span className="absolute left-2 bottom-2 bg-blue-600 text-white text-xs px-3 py-1 rounded-full shadow">
+                  {variants.find(v => v.id === allThumbnails[activeIndex].variant_id)?.warna}
+                </span>
+              )}
+              {/* Tombol panah */}
+              {activeIndex > 0 && (
+                <button
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow"
+                  onClick={() => setActiveIndex(activeIndex - 1)}
+                  type="button"
+                >&#8592;</button>
+              )}
+              {activeIndex < allThumbnails.length - 1 && (
+                <button
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 shadow"
+                  onClick={() => setActiveIndex(activeIndex + 1)}
+                  type="button"
+                >&#8594;</button>
+              )}
+            </div>
 
+            {/* Thumbnail gambar */}
+            <div className="flex gap-2 mb-4">
+              {allThumbnails.map((img, idx) => (
+                <button
+                  key={img.id}
+                  className={`relative w-16 h-16 rounded-lg border-2 ${activeIndex === idx ? 'border-blue-600' : 'border-gray-200'} overflow-hidden`}
+                  onClick={() => setActiveIndex(idx)}
+                  type="button"
+                >
+                  <img src={img.url} alt={`thumb-${idx}`} className="object-contain w-full h-full" />
+                  {/* Info varian di thumbnail */}
+                  {img.variant_id && (
+                    <span className="absolute left-1 bottom-1 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full">
+                      {variants.find(v => v.id === img.variant_id)?.warna}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Info Produk */}
           <div className="flex flex-col justify-between space-y-8">
             <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold mb-2">{product.nama}</h1>
+              <h1 className="text-3xl md:text-4xl font-extrabold mb-2">{displayProductName}</h1>
               <div className="flex items-center gap-2 mb-4">
                 <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">
                   {product.kategori}
@@ -168,6 +286,25 @@ export default function ProductDetail() {
                 </p>
               </div>
             </div>
+            {/* Tombol variasi pindah ke sini */}
+            {variants.length > 0 && (
+              <div className="flex gap-3 mb-4">
+                {variants.map(variant => (
+                  <button
+                    key={variant.id}
+                    className={`flex items-center justify-center px-4 py-2 rounded-full border-2 font-semibold shadow transition
+            ${selectedVariant?.id === variant.id
+              ? 'bg-blue-600 text-white border-blue-600 scale-105'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-400'}`}
+                    onClick={() => handleSelectVariant(variant)}
+                    type="button"
+                    title={variant.warna}
+                  >
+                    {variant.warna}
+                  </button>
+                ))}
+              </div>
+            )}
             <div>
               <button
                 onClick={handleAddToCart}

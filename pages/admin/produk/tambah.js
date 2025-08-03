@@ -16,6 +16,7 @@ export default function TambahProduk() {
   const [success, setSuccess] = useState('');
   const [showNewKategori, setShowNewKategori] = useState(false);
   const router = useRouter();
+  const [variants, setVariants] = useState([]);
 
   const handleChange = (e) => {
     const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
@@ -53,10 +54,26 @@ export default function TambahProduk() {
     setError('');
     setSuccess('');
     try {
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, val]) => formData.append(key, val));
+      // Kirim data varian (tanpa gambar)
+      formData.append('variants', JSON.stringify(variants.map(v => ({
+        warna: v.warna,
+        stok: v.stok,
+        images: v.images // array of URL
+      }))));
+      // Kirim gambar per varian
+      variants.forEach((v, idx) => {
+        if (v.images && v.images.length > 0) {
+          Array.from(v.images).forEach((file, i) => {
+            formData.append(`variant_images_${idx}[]`, file);
+          });
+        }
+      });
+
       const response = await fetch('/api/produk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: formData,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Gagal menambah produk');
@@ -69,6 +86,38 @@ export default function TambahProduk() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAddVariant = () => {
+    setVariants([...variants, { warna: '', stok: 0, images: [], previews: [] }]);
+  };
+
+  const handleRemoveVariant = (idx) => {
+    setVariants(variants.filter((_, i) => i !== idx));
+  };
+
+  const handleVariantChange = (idx, field, value) => {
+    const newVariants = [...variants];
+    newVariants[idx][field] = value;
+    setVariants(newVariants);
+  };
+
+  const handleVariantImages = async (idx, files) => {
+    const newVariants = [...variants];
+    newVariants[idx].previews = [];
+    newVariants[idx].images = [];
+    for (const file of files) {
+      // Upload ke Supabase via /api/upload
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        newVariants[idx].images.push(data.url); // Simpan URL, bukan file
+        newVariants[idx].previews.push(data.url);
+      }
+    }
+    setVariants(newVariants);
   };
 
   return (
@@ -182,6 +231,68 @@ export default function TambahProduk() {
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
                   />
                 </div>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Variants</h2>
+                {variants.map((variant, idx) => (
+                  <div key={idx} className="bg-gray-50 p-4 rounded-md shadow-sm mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Warna</label>
+                        <input
+                          type="text"
+                          value={variant.warna}
+                          onChange={e => handleVariantChange(idx, 'warna', e.target.value)}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Stok</label>
+                        <input
+                          type="number"
+                          value={variant.stok}
+                          onChange={e => handleVariantChange(idx, 'stok', Number(e.target.value))}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Gambar</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => handleVariantImages(idx, e.target.files)}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                          multiple
+                        />
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                          {variant.previews.map((preview, i) => (
+                            <div key={i} className="w-full h-20 relative">
+                              <img src={preview} alt={`Preview ${i + 1}`} className="w-full h-full object-cover rounded-md" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end mt-4">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVariant(idx)}
+                        className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        Hapus Variant
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleAddVariant}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  Tambah Variant
+                </button>
               </div>
               <button
                 type="submit"

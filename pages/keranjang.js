@@ -17,7 +17,7 @@ export default function CartPage() {
   const [estimasiLoading, setEstimasiLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  // State untuk modal
+  // State untuk modal upload bukti
   const [showUploadBukti, setShowUploadBukti] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [buktiFile, setBuktiFile] = useState(null);
@@ -30,7 +30,14 @@ export default function CartPage() {
     try {
       const res = await fetch('/api/cart');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal memuat keranjang.");
+      if (!res.ok) {
+        if (data.error === "Belum login") {
+          setSuccessMsg("Silakan login untuk melihat keranjang.");
+          setCartItems([]);
+          return;
+        }
+        throw new Error(data.error || "Gagal memuat keranjang.");
+      }
       setCartItems(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Fetch cart error:', error);
@@ -66,7 +73,7 @@ export default function CartPage() {
       setUpdatingItemId(null);
     }
   }, 500), [fetchCart]);
-
+// perbaikan fungsi kuantiti kalau qty diubah manual (emelebihi batas)
   const handleQtyChange = (id, stok, currentQty, amount) => {
     const newQty = currentQty + amount;
     if (newQty < 1 || newQty > stok || updatingItemId) return;
@@ -74,7 +81,7 @@ export default function CartPage() {
     setCartItems(items => items.map(item => item.id === id ? { ...item, quantity: newQty } : item));
     updateQuantityOnServer(id, newQty);
   };
-
+// perbaikan fungsi kuantiti
   const handleManualQtyChange = (id, stok, value) => {
     if (updatingItemId) return;
     setCartItems(items => items.map(item => {
@@ -82,7 +89,7 @@ export default function CartPage() {
         if (value === '') return { ...item, quantity: '' };
 
         let newQty = parseInt(value.replace(/[^0-9]/g, ''));
-        if (isNaN(newQty)) return item; // Abaikan jika bukan angka
+        if (isNaN(newQty)) return item;
         if (newQty > stok) newQty = stok;
         if (newQty < 1) newQty = 1;
 
@@ -206,7 +213,7 @@ export default function CartPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Checkout gagal');
       setOrderId(data.orderId);
-      setShowUploadBukti(true);
+      setShowUploadBukti(true); // Tampilkan modal upload bukti setelah checkout
     } catch (error) {
       alert(error.message);
     } finally {
@@ -246,7 +253,14 @@ export default function CartPage() {
                       <div className="ml-4 flex-1 flex flex-col">
                         <div>
                           <div className="flex justify-between text-base font-medium text-gray-900">
-                            <h3>{item.nama}</h3>
+                            <h3>
+                              {item.nama}
+                              {item.variant_nama && (
+                                <span className="mt-1 text-sm text-gray-500 block">
+                                  Varian: {item.variant_nama}
+                                </span>
+                              )}
+                            </h3>
                             <p className="ml-4">Rp{((isNaN(item.quantity) ? 0 : item.quantity) * item.harga).toLocaleString('id-ID')}</p>
                           </div>
                           <p className="mt-1 text-sm text-gray-500">Rp{item.harga.toLocaleString('id-ID')}</p>
@@ -341,9 +355,9 @@ export default function CartPage() {
         <ModalUploadBukti open={showUploadBukti} onClose={async () => {
           setShowUploadBukti(false);
           setBuktiFile(null); setBuktiPreview("");
-          await fetch('/api/cart', { method: 'DELETE' });
+          // Kosongkan keranjang setelah checkout berhasil dan modal ditutup
           setSuccessMsg("Checkout berhasil! Silakan upload bukti pembayaran di menu Riwayat Pesanan.");
-          fetchCart();
+          fetchCart(); // Muat ulang data keranjang (seharusnya sudah kosong)
           window.dispatchEvent(new Event('cartUpdate'));
         }} totalHarga={totalHarga + ongkirValue} buktiFile={buktiFile} setBuktiFile={setBuktiFile} buktiPreview={buktiPreview} setBuktiPreview={setBuktiPreview} uploading={uploading} onUpload={async () => {
           if (!buktiFile || !orderId) return;

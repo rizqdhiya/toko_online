@@ -13,8 +13,13 @@ export default function ProdukList() {
 
   const handleDelete = async (id) => {
     if (!confirm('Yakin hapus produk ini?')) return;
-    await fetch(`/api/produk/${id}`, { method: 'DELETE' });
-    setProduk(produk.filter(p => p.id !== id));
+    const res = await fetch(`/api/produk/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setProduk(produk.filter(p => p.id !== id));
+    } else {
+      const data = await res.json();
+      alert(data.error || 'Gagal menghapus produk');
+    }
   };
 
   return (
